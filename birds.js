@@ -50,6 +50,8 @@ router.get('/updatebird/:id/:vote', function(req,res) {
 	// var birdToUpdate;
 	var exists = false;
 	
+	vote = vote.replace(/-/g, ' ');
+	
 	var getBird = function ( callback ) {
 		collection.find({ '_id' : id }, function(e,docs) {
 
