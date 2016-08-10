@@ -33,13 +33,19 @@ router.get('/login/:username/:password', function(req,res) {
  *
  */
 
-router.get('/changepassword/:username/:password', function(req,res) {
+router.get('/changepassword/:id/:password', function(req,res) {
 	var db = req.db;
 	var collection = db.get('userlist');
-	var username = req.params.username;
+	var userId = req.params.id;
 	var newPassword = req.params.password;
+	console.log('username : ' + userId);
+	console.log('password : ' + newPassword);
 
-	collection.update({ 'username' : username }, { $set: { 'password' : newPassword} });
+	collection.update({ '_id' : userId }, { $set: { 'password' : newPassword}}, function(err, result){
+		res.send(
+			(err === null) ? { msg: '' } : { msg: err }
+		);
+	});
 });
 
 
