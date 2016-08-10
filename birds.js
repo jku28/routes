@@ -41,22 +41,18 @@ router.post('/addbird', function(req,res) {
 /* UPDATE bird
  *
  */
-router.get('/updatebird/:id/:vote', function(req,res) {
+router.get('/updatebird/:birdId/:vote/:userId', function(req,res) {
 	var db = req.db;
 	var collection = db.get('birdlist');
-	var id = req.params.id;
+	var bird = req.params.birdId;
+	var user = req.params.userId;
 	var vote = (req.params.vote).toString().toLowerCase();
 	var voteArray = [];
 	// var birdToUpdate;
 	var exists = false;
 	
-	vote = vote.replace(/-/g, ' ');
-	
 	var getBird = function ( callback ) {
-		collection.find({ '_id' : id }, function(e,docs) {
-
-			// birdToUpdate = docs;
-			// console.log(birdToUpdate);
+		collection.find({ '_id' : bird }, function(e,docs) {
 
 			voteArray = docs[0].votes;
 			callback(voteArray);
@@ -81,10 +77,17 @@ router.get('/updatebird/:id/:vote', function(req,res) {
 			voteList.push([vote,1]);
 		}	
 
-		// birdToUpdate.votes = voteList;
-		// console.log('bird.votes : ' + birdToUpdate.votes);
 		console.log('votelist after loop: ' + voteList);
-		collection.update({ _id : id }, { $set: { 'votes' : voteList} });
+		
+		// Replace votes property with new voteList
+		collection.update({ _id : bird }, { $set: { 'votes' : voteList}}, function(err, result){
+				res.send(
+					(err === null) ? { msg: 'Update Success' } : { msg: 'bloop' }
+				);
+		});
+		
+		// Add user to seenbyuser list
+		collection.update({ _id : bird }, { $push: { 'seenbyuser' : user }});
 	}
 
 	getBird(addVotes);
@@ -93,10 +96,10 @@ router.get('/updatebird/:id/:vote', function(req,res) {
 /* GET random bird
  *
  */
-router.get('/randomBird', function(req,res) {
+router.get('/randomBird/:id', function(req,res) {
 	var db = req.db;
 	var collection = db.get('birdlist');
-
+	var user = req.params.id;
 	// Create weighted array of bird votes, count total votes
 	var birdWeightedList =[];
 	var totalVotes = 0;
@@ -104,7 +107,9 @@ router.get('/randomBird', function(req,res) {
 	var counter = 0;
 
 	var getSightings = function ( callback ) {
-		collection.find({ 'status' : 'unverified' }, function(e,docs){
+		collection.find({ 'status' : 'unverified', 'seenbyuser' : {$ne : user} }, function(e,docs){
+
+			console.log(docs)
 
 			// Loops through unverified sightings and performs 4 functions
 			// 1) Get total votes for all unverified sightings
@@ -129,7 +134,7 @@ router.get('/randomBird', function(req,res) {
 			callback (birdWeightedList);
 		});
 	}
-
+	
 	var pickRandomSighting = function (weightedList) {
 		var randomBirdId;
 		var notAccepted = true;
