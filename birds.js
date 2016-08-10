@@ -12,6 +12,18 @@ router.get('/birdlist', function(req, res) {
 	});
 });
 
+/* GET birdlist by a user
+ *
+ */
+router.get('/birdlist/:id', function(req, res) {
+	var db = req.db;
+	var id = req.params.id;
+	var collection = db.get('birdlist');
+	collection.find({ 'owner' : id },{},function(e,docs) {
+		res.json(docs);
+	});
+});
+
 /* POST birdlist
  *
  */
